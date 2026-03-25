@@ -1,0 +1,89 @@
+---
+title: Anti-Patterns
+description: Common context engineering mistakes and how to avoid them.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Anti-Pattern 1: The Context Dump
+
+**What happens:** Developer pastes their entire codebase into the prompt.
+
+**Why it fails:** The model drowns in irrelevant information, pays less attention to what matters, and often produces responses that reference the wrong parts of the code.
+
+**Fix:** Load only the files relevant to the current task. Use file trees and summaries for orientation.
+
+## Anti-Pattern 2: The Amnesia Loop
+
+**What happens:** Developer starts a new conversation for every small question, losing all accumulated context.
+
+**Why it fails:** The AI has to re-learn your codebase, conventions, and current task every time.
+
+**Fix:** Use persistent files (`CLAUDE.md`, `.cursorrules`) to carry context between sessions. Keep a running session for related tasks.
+
+## Anti-Pattern 3: The Stale Cache
+
+**What happens:** Persistent context files haven't been updated in months while the codebase has changed significantly.
+
+**Why it fails:** The AI follows outdated conventions, references deleted files, or uses deprecated APIs.
+
+**Fix:** Review and update context files whenever you:
+- Change major architectural decisions
+- Adopt new libraries or patterns
+- Deprecate old approaches
+
+## Anti-Pattern 4: The Middle Burial
+
+**What happens:** Critical instructions are placed in the middle of a massive prompt, sandwiched between file contents.
+
+**Why it fails:** Models pay least attention to the middle of long contexts (the "lost in the middle" effect).
+
+**Fix:** Place critical instructions at the **beginning** (system prompt) or **end** (latest user message) of the context.
+
+<Aside type="caution">
+If you notice the AI ignoring a specific instruction, move it to the end of your message. It will likely be followed.
+</Aside>
+
+## Anti-Pattern 5: No Format Guidance
+
+**What happens:** Developer asks for output without specifying format.
+
+**Why it fails:** The AI guesses. Sometimes it produces markdown when you want JSON. Sometimes it gives a full essay when you want bullet points.
+
+**Fix:** Always specify output format:
+```
+Return the result as a JSON object with keys: 
+"filename", "line", "severity", "message"
+```
+
+## Anti-Pattern 6: The Infinite Thread
+
+**What happens:** A conversation runs for 100+ exchanges without pruning.
+
+**Why it fails:** The context window fills up with outdated exchanges. The AI starts contradicting its earlier responses. Quality plummets.
+
+**Fix:** Start fresh every 30–50 exchanges. Begin the new thread with a summary paragraph of decisions made so far.
+
+## Anti-Pattern 7: Conflicting Instructions
+
+**What happens:** System prompt says "use TypeScript", persistent file says "prefer JavaScript", and user message says "write in Python".
+
+**Why it fails:** The AI gets confused and produces inconsistent output, often defaulting to whatever was mentioned last.
+
+**Fix:** Audit your context stack for conflicts. Use a hierarchy:
+1. Latest user message wins over everything
+2. System prompt wins over persistent files
+3. Persistent files win over conversation history
+
+## Quick Self-Check
+
+Before sending a prompt, ask yourself:
+
+| Check | Question |
+|-------|----------|
+| Relevance | Is everything in context actually needed for this task? |
+| Freshness | Is the loaded context current? |
+| Position | Are critical instructions at the start or end? |
+| Budget | Am I leaving enough room for the response? |
+| Format | Did I specify the output format? |
+| Conflicts | Are any instructions contradicting each other? |

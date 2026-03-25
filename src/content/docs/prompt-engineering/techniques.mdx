@@ -1,0 +1,50 @@
+---
+title: Techniques
+description: Chain of Thought, Few-Shot, Negative Examples, XML Tags, and more prompt engineering techniques
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Chain of Thought (CoT)
+
+Add `"Think step by step before answering"`. Forces AI to reason before concluding. Use for complex logic.
+
+## Few-Shot Examples
+
+Show 2–3 input/output pairs before your real question. AI learns your pattern and matches it exactly.
+
+## Negative Examples
+
+Tell it what BAD output looks like:
+
+```
+"Do NOT use synchronous calls like this: [bad example]"
+```
+
+## XML Tags for Structure
+
+```xml
+<context>Your project info</context>
+<task>What to do</task>
+<format>Output shape</format>
+```
+
+<Aside type="tip">
+Claude handles XML-structured prompts better than free-text for complex tasks.
+</Aside>
+
+## Plan Before Act
+
+```
+"Before writing any code, write a plan. I'll approve it, then you execute."
+```
+
+Prevents runaway complexity.
+
+## Persona Assignment
+
+```
+"Act as a strict security auditor with zero tolerance for vulnerabilities"
+```
+
+Gets completely different output than "review this code".

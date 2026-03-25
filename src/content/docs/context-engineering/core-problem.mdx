@@ -1,0 +1,54 @@
+---
+title: The Core Problem
+description: Why context engineering matters — LLMs are stateless, your job is to give them the right information at the right time.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## LLMs Are Stateless
+
+Every time you send a message, the model starts from zero. It has **no memory** of previous conversations, no awareness of your codebase, and no understanding of your project conventions — unless you explicitly provide that context.
+
+<Aside type="caution">
+The model doesn't "remember" your last conversation. It reads everything you put in the context window, every single time.
+</Aside>
+
+## What Is Context Engineering?
+
+Context engineering is the discipline of **curating the right information** and delivering it to the model at the right time, in the right format, within the right budget.
+
+```
+Context Engineering = What to include + When to load it + How to format it + How much fits
+```
+
+## The Three Failure Modes
+
+| Failure | What Happens | Result |
+|---------|-------------|--------|
+| **Too little context** | Model guesses or hallucinates | Wrong code, wrong assumptions |
+| **Too much context** | Model drowns in noise | Loses focus, ignores key details |
+| **Wrong context** | Model has stale or irrelevant info | Confidently wrong answers |
+
+## Why It Matters for Engineers
+
+As codebases grow, **prompt engineering alone isn't enough.** You need a system for:
+
+- Loading the right files into the conversation
+- Persisting architectural decisions across sessions
+- Keeping context fresh as code evolves
+- Staying within the model's token window
+
+<Aside>
+**Analogy:** Prompt engineering is writing a good email. Context engineering is preparing the entire briefing packet before the meeting.
+</Aside>
+
+## The Context Stack
+
+Think of context as layered:
+
+1. **System prompt** — Persona, rules, constraints (always present)
+2. **Persistent context** — Project conventions, architecture decisions (loaded per-session)
+3. **Dynamic context** — Relevant files, error messages, test output (loaded per-task)
+4. **Conversation context** — The back-and-forth dialogue (accumulates during chat)
+
+Each layer has different **refresh rates** and **token costs**. Context engineering is about managing all four efficiently.

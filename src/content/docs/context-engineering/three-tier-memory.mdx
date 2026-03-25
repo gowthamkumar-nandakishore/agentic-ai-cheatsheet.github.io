@@ -1,0 +1,73 @@
+---
+title: Three-Tier Memory
+description: System prompt, persistent files, and dynamic context — the three layers every AI-assisted project needs.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Memory Problem
+
+AI assistants forget everything between sessions. To compensate, you need a **layered memory architecture** that keeps the right context alive at every level.
+
+## The Three Tiers
+
+### Tier 1: System Prompt (Always Loaded)
+
+The system prompt is injected at the start of every conversation. It defines:
+
+- **Persona** — "You are a senior Python engineer"
+- **Hard rules** — "Never delete production data"
+- **Output format** — "Always respond in JSON"
+
+```
+Cost: Low (typically 200–800 tokens)
+Refresh rate: Rarely changes
+```
+
+<Aside>
+System prompts are invisible to the user but shape every response. Treat them like code — version control them.
+</Aside>
+
+### Tier 2: Persistent Files (Loaded Per-Session)
+
+These are project-level documents that the AI reads at the start of a session:
+
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Project conventions, architecture decisions |
+| `.cursorrules` | Cursor IDE instructions |
+| `copilot-instructions.md` | GitHub Copilot customization |
+| `AGENTS.md` | Agent-specific routing rules |
+
+```
+Cost: Medium (1,000–5,000 tokens)
+Refresh rate: Updated when conventions change
+```
+
+### Tier 3: Dynamic Context (Loaded Per-Task)
+
+Context that changes with every task:
+
+- **Files** — The specific source files being edited
+- **Error output** — Stack traces, build failures
+- **Test results** — Which tests pass/fail
+- **Search results** — Code search, grep output
+- **Conversation history** — The current back-and-forth
+
+```
+Cost: High (can consume 50–90% of the window)
+Refresh rate: Every message
+```
+
+## Designing Your Memory Stack
+
+| Question | Design Decision |
+|----------|----------------|
+| What must the AI *always* know? | Put it in the system prompt |
+| What must the AI know *per project*? | Put it in persistent files |
+| What must the AI know *per task*? | Load it dynamically |
+| What can the AI *discover on its own*? | Don't pre-load it |
+
+<Aside type="tip">
+**Rule of thumb:** If you find yourself repeating the same instruction across conversations, it belongs in a persistent file, not the chat.
+</Aside>

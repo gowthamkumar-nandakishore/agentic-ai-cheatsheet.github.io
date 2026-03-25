@@ -1,0 +1,99 @@
+---
+title: The Agent Loop
+description: Plan → Act → Observe → Repeat — the core execution loop of every AI agent.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Core Loop
+
+Every agentic system follows the same fundamental pattern:
+
+```
+┌─────────┐
+│  PLAN   │ ← Break goal into next step
+└────┬────┘
+     │
+┌────▼────┐
+│   ACT   │ ← Execute tool call (read file, run command, edit code)
+└────┬────┘
+     │
+┌────▼────┐
+│ OBSERVE │ ← Read the result of the action
+└────┬────┘
+     │
+┌────▼────┐
+│ DECIDE  │ ← Goal met? → Stop. Error? → Retry. More steps? → Loop.
+└─────────┘
+```
+
+## Each Phase in Detail
+
+### 1. Plan
+
+The agent examines the current state and decides the next action:
+
+- What is the goal?
+- What has already been done?
+- What information is missing?
+- What should I do next?
+
+<Aside>
+Good agents plan one step at a time. Bad agents try to plan 20 steps upfront — and most of those steps become irrelevant after step 3.
+</Aside>
+
+### 2. Act
+
+The agent calls a tool to interact with the world:
+
+| Tool Type | Examples |
+|-----------|----------|
+| File system | Read file, write file, search code |
+| Terminal | Run build, execute tests, install packages |
+| Browser | Fetch documentation, open URLs |
+| API | GitHub API, database query |
+| Communication | Ask user a question, request approval |
+
+### 3. Observe
+
+The agent reads the output of its action:
+
+- Did the command succeed or fail?
+- What does the output contain?
+- Does this match what was expected?
+- Is there new information to incorporate?
+
+### 4. Decide
+
+Based on the observation, the agent chooses one of:
+
+- **Continue** — Goal not yet met, plan the next step
+- **Retry** — Action failed, try a different approach
+- **Escalate** — Stuck or uncertain, ask the human
+- **Complete** — Goal achieved, report results
+
+## Loop Termination
+
+An agent loop must eventually stop. Common termination conditions:
+
+| Condition | Example |
+|-----------|---------|
+| **Success** | All tests pass after the fix |
+| **Max iterations** | Stop after 25 tool calls |
+| **Repeated failure** | Same error 3 times in a row |
+| **User abort** | Human cancels the task |
+| **Confidence drop** | Agent admits it's unsure |
+
+<Aside type="caution">
+**Always set a max iteration limit.** An unbounded agent loop can burn through API credits, make dozens of bad edits, or run indefinitely.
+</Aside>
+
+## What Makes a Good Loop
+
+| Good | Bad |
+|------|-----|
+| Plans one step ahead | Plans 20 steps ahead |
+| Verifies after each action | Assumes success |
+| Tries alternatives on failure | Retries the same thing |
+| Asks for help when stuck | Silently produces garbage |
+| Stops when done | Keeps "improving" forever |

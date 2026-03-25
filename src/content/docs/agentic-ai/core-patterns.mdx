@@ -1,0 +1,103 @@
+---
+title: Core Patterns
+description: Tool use, function calling, multi-agent orchestration, and other proven agentic patterns.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Pattern 1: Tool Use / Function Calling
+
+The most fundamental agentic pattern. The model can call pre-defined tools to interact with the world.
+
+```json
+{
+  "tool": "read_file",
+  "arguments": {
+    "path": "src/services/auth.ts",
+    "startLine": 45,
+    "endLine": 80
+  }
+}
+```
+
+**Key principle:** The model generates a structured tool call, the system executes it, and the result is fed back into the model's context.
+
+<Aside type="tip">
+Keep tool descriptions precise. A vague tool description leads to the model calling the wrong tool or passing wrong arguments.
+</Aside>
+
+## Pattern 2: ReAct (Reasoning + Acting)
+
+The model explicitly reasons about what to do before acting:
+
+```
+Thought: The test is failing on line 47 with a NullReferenceException.
+         I need to read the source file to understand what's null.
+Action:  read_file("src/services/auth.ts", lines 40-55)
+Observation: The user variable is not checked for null before accessing .email
+Thought: I need to add a null check before line 47.
+Action:  edit_file(...)
+```
+
+**When to use:** Tasks requiring multi-step reasoning where you want transparency into the agent's decision process.
+
+## Pattern 3: Plan-and-Execute
+
+Separate planning from execution:
+
+1. **Planner** — Breaks the goal into a numbered task list
+2. **Executor** — Works through each task sequentially
+3. **Re-planner** — After each task, revises the remaining plan
+
+**When to use:** Complex tasks where the full scope needs to be understood before starting.
+
+## Pattern 4: Multi-Agent Delegation
+
+Multiple specialized agents collaborate:
+
+| Agent | Role |
+|-------|------|
+| **Orchestrator** | Receives the goal, delegates subtasks |
+| **Researcher** | Searches code, reads documentation |
+| **Coder** | Writes and edits code |
+| **Reviewer** | Checks code quality, runs tests |
+| **Reporter** | Summarizes results for the human |
+
+<Aside type="caution">
+Multi-agent systems are powerful but complex. Start with a single agent loop before introducing delegation.
+</Aside>
+
+## Pattern 5: Human-in-the-Loop
+
+The agent works autonomously but pauses for human approval at critical points:
+
+- Before destructive operations (deleting files, dropping tables)
+- Before external-facing actions (pushing code, sending messages)
+- When confidence is low
+- When multiple valid approaches exist
+
+**When to use:** Production systems where mistakes are costly and irreversible.
+
+## Pattern 6: Self-Reflection
+
+The agent reviews its own output before submitting:
+
+```
+Step 1: Generate the code
+Step 2: Re-read the code and look for bugs
+Step 3: Fix any issues found
+Step 4: Submit the final version
+```
+
+**When to use:** Anywhere you need higher quality output at the cost of extra inference calls.
+
+## Pattern Comparison
+
+| Pattern | Complexity | Autonomy | Best For |
+|---------|-----------|----------|----------|
+| Tool Use | Low | Medium | Single-step actions |
+| ReAct | Medium | Medium | Transparent reasoning |
+| Plan-and-Execute | Medium | High | Complex multi-step tasks |
+| Multi-Agent | High | Very High | Specialized workflows |
+| Human-in-the-Loop | Medium | Controlled | Safety-critical tasks |
+| Self-Reflection | Low | Medium | Quality improvement |

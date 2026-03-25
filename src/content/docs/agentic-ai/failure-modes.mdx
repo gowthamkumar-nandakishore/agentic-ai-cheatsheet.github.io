@@ -1,0 +1,90 @@
+---
+title: Failure Modes
+description: Common ways agentic AI goes wrong and how to prevent or recover from each.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Failure Mode 1: The Infinite Loop
+
+**What happens:** Agent repeats the same action over and over, never making progress.
+
+**Example:** Agent fixes a bug, runs tests, sees a *different* test fail, "fixes" it by reverting the first fix, original test fails again, repeat.
+
+**Prevention:**
+- Set a maximum iteration limit (25–50 tool calls)
+- Track action history — if the same action appears 3 times, stop
+- Require the agent to explain what's *different* about each retry
+
+## Failure Mode 2: The Snowball Edit
+
+**What happens:** Agent makes a small mistake, then makes bigger changes to compensate, creating a cascade of bad edits across multiple files.
+
+**Example:** Agent misunderstands the architecture, renames a function, then has to update 30 call sites, introduces bugs in each one.
+
+**Prevention:**
+- Use version control — commit before the agent starts
+- Require the agent to verify after each multi-file change (run build/tests)
+- Set a "max files changed" limit for safety
+
+<Aside type="caution">
+If an agent has changed more than 10 files without running the test suite, something has gone wrong. Stop and review.
+</Aside>
+
+## Failure Mode 3: The Confident Hallucination
+
+**What happens:** Agent invents an API, function, or file that doesn't exist, then writes code that references it.
+
+**Example:** Agent writes `import { validateSchema } from '@utils/validation'` — that module doesn't exist.
+
+**Prevention:**
+- Require the agent to read/search before writing
+- Run the build after every edit to catch import errors
+- Include in system prompt: "Only use APIs and functions you have verified exist"
+
+## Failure Mode 4: The Scope Creep
+
+**What happens:** Agent is asked to fix a bug but decides to also refactor the file, add tests, update documentation, and "improve" the code style.
+
+**Example:** "Fix the null check on line 47" turns into a 500-line diff touching 12 files.
+
+**Prevention:**
+- Be explicit about scope: "Fix ONLY the null check. Do not change anything else."
+- Review diffs before accepting
+- Instruct the agent to explain any changes beyond the stated scope
+
+## Failure Mode 5: The Security Blindspot
+
+**What happens:** Agent writes code with security vulnerabilities because it optimizes for "working" over "secure".
+
+**Example:** Agent adds `eval()` to parse user input, or disables CORS validation to fix a test.
+
+**Prevention:**
+- Include security rules in system prompt
+- Run static analysis (linting, SAST) as part of the agent loop
+- Flag patterns like `eval()`, `--no-verify`, `chmod 777`, `disable_ssl`
+
+## Failure Mode 6: The Silent Failure
+
+**What happens:** Agent reports success but the task isn't actually complete or correct.
+
+**Example:** Agent says "all tests pass" but actually only ran 2 of 50 tests, or tests pass because they test nothing.
+
+**Prevention:**
+- Verify agent's claims: check the actual test output
+- Require the agent to show evidence (paste test output, build log)
+- Use a separate verification step after the agent declares completion
+
+## Recovery Playbook
+
+| Situation | Action |
+|-----------|--------|
+| Agent is looping | Stop, review the last 5 actions, restart with clearer context |
+| Agent made bad edits | `git stash` or `git checkout .` to revert, retry with constraints |
+| Agent is hallucinating | Add real file contents to context, tell it to only reference what it can see |
+| Agent scope-crept | Revert to last commit, re-state the task with explicit boundaries |
+| Agent broke the build | Revert, run build yourself to confirm, give agent the error output |
+
+<Aside type="tip">
+**The best guardrail is a mandatory build/test step after every significant edit.** If the agent can't break the build, it can't snowball.
+</Aside>

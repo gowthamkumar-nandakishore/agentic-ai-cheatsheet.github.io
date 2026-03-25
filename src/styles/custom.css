@@ -1,0 +1,15 @@
+/* Custom styles for the AI Cheatsheet Starlight site */
+
+:root {
+  --sl-color-accent-low: #1a1636;
+  --sl-color-accent: #5b4fc7;
+  --sl-color-accent-high: #c4bfff;
+  --sl-font: "Inter", sans-serif;
+  --sl-font-mono: "Space Mono", "IBM Plex Mono", monospace;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #e8e5ff;
+  --sl-color-accent: #5b4fc7;
+  --sl-color-accent-high: #2d2566;
+}

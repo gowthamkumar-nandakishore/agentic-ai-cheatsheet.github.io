@@ -1,0 +1,88 @@
+---
+title: Project-Level Configuration
+description: CLAUDE.md and project-scoped files that shape how AI assistants behave in your repository.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## What Is Project-Level Configuration?
+
+Project-level configuration files live in your repository root and tell AI assistants how to work within *this specific project*. They are version-controlled, shared with your team, and loaded automatically at the start of every session.
+
+## CLAUDE.md
+
+The primary configuration file for Claude Code and Claude-powered tools.
+
+```markdown
+# CLAUDE.md
+
+## Project Overview
+FastAPI service for document parsing. Python 3.12, deployed on AWS ECS.
+
+## Build & Test
+- Install: `pip install -e ".[dev]"`
+- Test: `pytest tests/ -v`
+- Lint: `ruff check .`
+- Type check: `mypy src/`
+
+## Code Conventions
+- Use `snake_case` for functions and variables
+- All public functions must have docstrings
+- Prefer `pathlib.Path` over `os.path`
+- Use `pydantic` for all data models
+
+## Architecture
+- `src/services/` — Business logic
+- `src/api/` — FastAPI route handlers
+- `src/models/` — Pydantic models
+- `src/infra/` — AWS clients, database connections
+
+## Critical Rules
+- NEVER modify migration files after they've been applied
+- NEVER commit secrets or API keys
+- Always run tests before suggesting a commit
+```
+
+<Aside type="tip">
+Keep `CLAUDE.md` under 200 lines. If it gets longer, split into sub-files and reference them.
+</Aside>
+
+## What to Include
+
+| Section | Purpose | Example |
+|---------|---------|---------|
+| **Project overview** | One-paragraph description | "FastAPI doc parsing service" |
+| **Build commands** | How to install, build, test, lint | `pytest tests/ -v` |
+| **Code conventions** | Naming, style, patterns | "Use snake_case" |
+| **Architecture** | Directory structure, key modules | `src/services/` — Business logic |
+| **Critical rules** | Things the AI must NEVER do | "Never modify migrations" |
+| **Dependencies** | Key libraries and versions | "Python 3.12, FastAPI 0.115" |
+
+## What NOT to Include
+
+- Full API documentation (too long, use links)
+- Historical decisions (use ADRs in `docs/`)
+- Personal preferences (use `~/.claude/CLAUDE.md` instead)
+- Secrets, credentials, or internal URLs
+
+## Other Project-Level Files
+
+| File | Used By | Format |
+|------|---------|--------|
+| `.cursorrules` | Cursor IDE | Markdown |
+| `.github/copilot-instructions.md` | GitHub Copilot | Markdown |
+| `.windsurfrules` | Windsurf | Markdown |
+| `AGENTS.md` | GitHub Copilot Agents | Markdown + YAML frontmatter |
+
+<Aside>
+Most AI tools are converging on the same idea: a markdown file in the repo root that describes project conventions. The file name differs, but the concept is identical.
+</Aside>
+
+## Keeping It Fresh
+
+Project-level files go stale. Set a reminder to review them when you:
+
+- Upgrade major dependencies
+- Change architectural patterns
+- Adopt new tools or conventions
+- Onboard new team members (they'll expose gaps)

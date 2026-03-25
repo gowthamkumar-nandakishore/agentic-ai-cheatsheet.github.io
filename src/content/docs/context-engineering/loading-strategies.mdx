@@ -1,0 +1,92 @@
+---
+title: Loading Strategies
+description: How to decide what context to load, when, and in what format.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Loading Decision
+
+Every token you load into context has a cost. Load too much and the model loses focus. Load too little and it hallucinates. The art is in choosing the right strategy for each situation.
+
+## Strategy 1: Explicit File References
+
+Tell the AI exactly which files to read:
+
+```
+Read src/services/auth.ts and src/middleware/jwt.ts,
+then fix the token refresh bug.
+```
+
+**When to use:** You know which files are relevant.
+
+## Strategy 2: Search-Then-Load
+
+Let the AI search first, then load what it finds:
+
+```
+Search the codebase for all usages of `UserService.authenticate()`,
+then show me the call chain.
+```
+
+**When to use:** You know the *concept* but not the *files*.
+
+## Strategy 3: Convention Files
+
+Pre-load project conventions so the AI follows your patterns:
+
+```markdown
+# CLAUDE.md
+- Use `snake_case` for all Python functions
+- Always use `pytest` fixtures, never `setUp/tearDown`
+- Import order: stdlib → third-party → local
+```
+
+**When to use:** Every session, automatically.
+
+## Strategy 4: Error-Driven Loading
+
+Let failures drive what gets loaded:
+
+1. AI writes code
+2. Build fails with error
+3. Error message becomes context
+4. AI reads the error and fixes the issue
+
+**When to use:** Iterative debugging loops.
+
+## Strategy 5: Summary-Then-Detail
+
+For large codebases, load summaries first:
+
+```
+First, give me an overview of the `src/payments/` directory structure.
+Then I'll tell you which file to read in detail.
+```
+
+**When to use:** Exploring unfamiliar code.
+
+## Format Matters
+
+How you format context affects how well the model uses it:
+
+| Format | Good For | Token Cost |
+|--------|----------|------------|
+| Raw source code | Precise edits | High |
+| File tree / directory listing | Navigation | Low |
+| Error messages | Debugging | Medium |
+| Bullet-point summaries | Architecture overview | Low |
+| Full conversation history | Continuity | Very High |
+
+<Aside type="caution">
+**Don't dump entire files** when you only need a function. Use line ranges or grep output to load just the relevant section.
+</Aside>
+
+## The Loading Checklist
+
+Before every task, ask:
+
+1. What does the AI need to know to solve this?
+2. What's the *minimum* context that's sufficient?
+3. Is there a cheaper way to represent this information?
+4. Will this context still fit in the window with room for the response?

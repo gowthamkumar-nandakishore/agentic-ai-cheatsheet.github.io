@@ -1,0 +1,99 @@
+---
+title: Coordination via Files
+description: How agents use the file system as shared memory for multi-step and multi-agent workflows.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Files as Shared Memory
+
+In agentic systems, the file system is the universal coordination layer. Agents read files to understand state, write files to record decisions, and use file conventions to communicate with future sessions.
+
+## Why Files Work
+
+| Property | Benefit for Agents |
+|----------|-------------------|
+| Persistent | Survives across sessions and restarts |
+| Inspectable | Humans can review what agents wrote |
+| Versionable | Git tracks every change |
+| Structured | Markdown, JSON, YAML are easy to parse |
+| Universal | Every tool and language can read files |
+
+## Common File Coordination Patterns
+
+### Pattern 1: The Instructions File
+
+A file that tells the agent how to behave:
+
+```markdown
+# CLAUDE.md
+## Project conventions
+- Use Python 3.12+ syntax
+- All functions must have type hints
+- Run `pytest` before committing
+
+## Architecture decisions
+- FastAPI for all HTTP services
+- DynamoDB for document storage
+- FAISS for vector search
+```
+
+<Aside>
+This is the most common pattern. Every major AI coding tool supports some variation: `CLAUDE.md`, `.cursorrules`, `copilot-instructions.md`.
+</Aside>
+
+### Pattern 2: The TODO/Plan File
+
+A file that tracks progress across agent sessions:
+
+```markdown
+# TODO.md
+- [x] Set up FastAPI project structure
+- [x] Create database models
+- [ ] Implement auth middleware
+- [ ] Write integration tests
+- [ ] Deploy to staging
+```
+
+The agent reads this at the start of each session and picks up where it left off.
+
+### Pattern 3: The Session Summary
+
+An agent writes a summary at the end of a session for the next agent (or the next conversation):
+
+```markdown
+# SESSION_LOG.md
+## 2025-03-25 Session
+### What was done
+- Fixed authentication bug in jwt.ts
+- Added token refresh endpoint
+### What's left
+- Need to update the Swagger docs
+- Tests for refresh endpoint still failing (timeout issue)
+### Key decisions
+- Chose RS256 over HS256 for JWT signing
+```
+
+### Pattern 4: The Memory File
+
+Long-term learnings that accumulate over time:
+
+```markdown
+# LEARNED.md
+- The `users` table has a composite key (org_id, user_id)
+- Build takes ~3 minutes, don't set timeout lower than 5min
+- The staging DB is read-only on weekends (maintenance window)
+```
+
+## File Coordination Anti-Patterns
+
+| Anti-Pattern | Problem |
+|-------------|---------|
+| Writing to files the agent also reads in the same step | Race condition / stale reads |
+| Storing state in conversation instead of files | Lost between sessions |
+| Using complex binary formats | Agent can't easily read/write them |
+| No human review of agent-written files | Drift and quality degradation |
+
+<Aside type="tip">
+**Golden rule:** If an agent learns something important, it should write it to a file. If it's not in a file, it doesn't exist for the next session.
+</Aside>

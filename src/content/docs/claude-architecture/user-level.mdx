@@ -1,0 +1,105 @@
+---
+title: User-Level Configuration
+description: Personal preferences and global settings that apply across all your projects.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## What Is User-Level Configuration?
+
+User-level configuration defines your *personal* preferences — things that should apply regardless of which project you're working in. These files live outside any specific repository.
+
+## Location
+
+```
+~/.claude/
+├── CLAUDE.md          # Global instructions for Claude
+├── settings.json      # Claude Code settings
+└── commands/          # Custom slash commands
+    ├── review.md
+    └── explain.md
+```
+
+<Aside>
+The `~/.claude/` directory is specific to Claude Code. Other tools have similar locations: `~/.cursor/rules` for Cursor, VS Code settings for Copilot.
+</Aside>
+
+## Global CLAUDE.md
+
+Your personal `~/.claude/CLAUDE.md` is loaded into every Claude Code session, across all projects:
+
+```markdown
+# ~/.claude/CLAUDE.md
+
+## My Preferences
+- I prefer concise responses, not verbose explanations
+- Always show the file path when referencing code
+- Use British English spelling (colour, not color)
+
+## My Stack
+- Primary languages: Python, TypeScript
+- Editor: VS Code
+- OS: macOS
+- Shell: zsh
+
+## Communication Style
+- Be direct, skip the pleasantries
+- When something is wrong, tell me bluntly
+- Don't explain basic concepts unless I ask
+```
+
+## What Goes Where?
+
+| Preference Type | Where to Put It |
+|----------------|-----------------|
+| "I prefer tabs over spaces" | User-level (personal) |
+| "This project uses 2-space indent" | Project-level (repo) |
+| "Always run pytest before committing" | Project-level (repo) |
+| "Show me diffs, not full files" | User-level (personal) |
+| "Use FastAPI for HTTP services" | Project-level (repo) |
+| "I like concise answers" | User-level (personal) |
+
+<Aside type="tip">
+**Rule of thumb:** If your team would disagree about it, it's personal (user-level). If the team agrees, it's a project convention (project-level).
+</Aside>
+
+## Custom Commands
+
+User-level custom commands are reusable prompts:
+
+```markdown
+<!-- ~/.claude/commands/review.md -->
+Review the current git diff for:
+1. Security issues
+2. Performance problems
+3. Missing error handling
+4. Test coverage gaps
+
+Provide a summary table with severity ratings.
+```
+
+Usage: `/review` in any project.
+
+## Priority Order
+
+When user-level and project-level configurations conflict, the resolution order is:
+
+1. **Current message** (highest priority)
+2. **Session conversation context**
+3. **Project-level** (`./CLAUDE.md`)
+4. **User-level** (`~/.claude/CLAUDE.md`)
+5. **System defaults** (lowest priority)
+
+Project-level conventions override personal preferences when working in a specific repo. This ensures team consistency.
+
+## Syncing Across Machines
+
+Your `~/.claude/` directory is local. To sync across machines:
+
+- Store it in a dotfiles repo
+- Use symlinks from your dotfiles to `~/.claude/`
+- Keep it in a cloud-synced folder (Dropbox, iCloud)
+
+<Aside type="caution">
+Don't include secrets, API keys, or tokens in your user-level config files. Use environment variables or your OS keychain for sensitive data.
+</Aside>

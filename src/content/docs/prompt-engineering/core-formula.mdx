@@ -1,0 +1,43 @@
+---
+title: The Core Formula
+description: The anatomy of a great prompt — ROLE + CONTEXT + TASK + FORMAT + CONSTRAINTS
+---
+
+import { Aside, Code } from '@astrojs/starlight/components';
+
+## Every Great Prompt
+
+```
+EVERY GREAT PROMPT = [ROLE] + [CONTEXT] + [TASK] + [FORMAT] + [CONSTRAINTS]
+```
+
+<Aside>
+**Kid version:** Tell the AI WHO it is, WHAT you have, WHAT you want, HOW you want it back, and what it must NOT do.
+</Aside>
+
+## Prompt Anatomy
+
+| Part | What It Does | Example |
+|------|-------------|---------|
+| **ROLE** | Sets expertise level | "You are a senior .NET architect" |
+| **CONTEXT** | Background info | "This is a FastAPI app migrating to .NET 8" |
+| **TASK** | What to do | "Rewrite the UserService" |
+| **FORMAT** | Output shape | "Return a C# class with XML docs" |
+| **CONSTRAINTS** | Hard limits | "Don't change the public interface" |
+
+## The 5 Levels of Prompt Quality
+
+1. **Vague:** "Fix the bug" — useless
+2. **Specific:** "Fix the null reference in UserService.cs line 47"
+3. **Contextual:** Add WHY it's a problem + what you've tried
+4. **Constrained:** Add what must NOT change
+5. **Expert:** All above + desired output format + success criteria
+
+## Do vs Don't
+
+| ✓ Do | ✗ Don't |
+|------|---------|
+| Give the AI a goal to solve | Give step-by-step instructions |
+| Specify the output format explicitly | Assume it knows how you want it |
+| Include what must NOT change | Only say what it should do |
+| Ask it to explain before acting | Let it jump straight to code |

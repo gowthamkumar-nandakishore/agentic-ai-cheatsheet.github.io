@@ -1,0 +1,81 @@
+---
+title: What Is Agentic AI?
+description: The shift from chat-based AI to autonomous agents that plan, execute, and self-correct.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## From Chat to Agent
+
+Traditional AI usage is **reactive**: you ask a question, you get an answer. Agentic AI is **proactive**: you give it a goal, and it figures out the steps, executes them, and handles failures along the way.
+
+| | Chat-Based AI | Agentic AI |
+|---|---|---|
+| **Input** | A question | A goal |
+| **Output** | An answer | Completed work |
+| **Steps** | One | Many (planned dynamically) |
+| **Tools** | None | File system, terminal, APIs, browser |
+| **Error handling** | "Here's what went wrong" | Detects error, retries differently |
+| **Autonomy** | Zero | High |
+
+## The Key Ingredients
+
+An AI becomes "agentic" when it has:
+
+1. **Planning** — Can break a goal into subtasks
+2. **Tool use** — Can read files, run commands, search code
+3. **Observation** — Can read the output of its actions
+4. **Self-correction** — Can detect failures and try a different approach
+5. **Persistence** — Can continue working across many steps
+
+<Aside>
+An agent is just an LLM in a loop: **Plan → Act → Observe → Repeat** until the goal is met.
+</Aside>
+
+## Real-World Examples
+
+### Coding Agent
+> "Fix the failing test in `test_auth.py`"
+1. Agent reads the test file
+2. Runs the test, sees the error
+3. Reads the source code being tested
+4. Identifies the bug
+5. Edits the source file
+6. Re-runs the test — passes
+7. Done
+
+### Research Agent
+> "Find all usages of the deprecated `v1/users` API and migrate them to `v2/users`"
+1. Agent searches the codebase for `v1/users`
+2. Lists all files containing matches
+3. For each file, reads the surrounding code
+4. Applies the migration pattern
+5. Runs the test suite after each change
+6. Reports a summary
+
+## The Spectrum of Agency
+
+Not all agents are fully autonomous. There's a spectrum:
+
+```
+Manual ──────────────────────────────── Fully Autonomous
+
+Copilot     Chat + Tools     Agent Loop     Multi-Agent
+(autocomplete)  (one-shot)    (plan-act-observe)  (delegation)
+```
+
+<Aside type="tip">
+Start with less agency and increase it as you build trust. A fully autonomous agent on day one is a recipe for chaos.
+</Aside>
+
+## When to Use Agents
+
+**Good fit:**
+- Multi-step tasks with clear success criteria
+- Repetitive tasks across many files
+- Tasks where the AI can verify its own work (run tests, build)
+
+**Bad fit:**
+- Creative/subjective decisions (design, naming, architecture)
+- Tasks where mistakes are expensive and irreversible
+- Situations requiring human judgment or approval at each step

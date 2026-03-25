@@ -1,0 +1,31 @@
+---
+title: When Prompts Fail
+description: How to recover when AI goes in circles, overengineers, or gives the wrong output format
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## AI Going in Circles
+
+```
+"Stop. Your last 3 attempts failed. What is fundamentally wrong
+with your approach? Propose a completely different strategy."
+```
+
+## Overengineering
+
+```
+"That's too complex. What is the simplest possible solution?
+Simplicity > cleverness here."
+```
+
+## Wrong Output Format
+
+```
+"Your output format was wrong. Here is EXACTLY what I want:
+[paste example]. Now try again."
+```
+
+<Aside type="caution">
+If the AI keeps making the same mistake, don't just re-prompt — capture the correction in your context files (CLAUDE.md, rules, or specs). That way it never repeats the same mistake across sessions.
+</Aside>

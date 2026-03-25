@@ -1,0 +1,134 @@
+---
+title: Core Components
+description: The building blocks of the .claude/ ecosystem — CLAUDE.md, settings, commands, memory, and MCP servers.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Full Architecture
+
+The `.claude/` ecosystem has several interconnected components:
+
+```
+.claude/ Architecture
+├── Instructions     → What the AI should know and do
+├── Settings         → How the AI tool behaves
+├── Commands         → Reusable prompt shortcuts
+├── Memory           → Persistent facts across sessions
+└── MCP Servers      → External tool integrations
+```
+
+## 1. Instructions (CLAUDE.md)
+
+The core component. A markdown file that defines conventions, rules, and context.
+
+**Scopes:**
+- `./CLAUDE.md` — Project root (team-shared)
+- `./src/backend/CLAUDE.md` — Directory-level (module-specific)
+- `~/.claude/CLAUDE.md` — User-level (personal)
+
+**How they compose:** All applicable CLAUDE.md files are loaded and concatenated. More specific scopes can override general ones.
+
+## 2. Settings (settings.json)
+
+Controls the behavior of the Claude Code tool itself:
+
+```json
+{
+  "permissions": {
+    "allow": ["read", "write", "terminal"],
+    "deny": ["web_fetch"]
+  },
+  "model": "claude-sonnet-4-20250514",
+  "maxTokens": 16384
+}
+```
+
+## 3. Custom Commands
+
+Reusable prompts stored as markdown files:
+
+```
+.claude/commands/          → Project-scope commands
+~/.claude/commands/        → User-scope commands
+```
+
+Each file becomes a `/command-name` in the CLI:
+
+```markdown
+<!-- .claude/commands/test-and-commit.md -->
+1. Run the full test suite
+2. If all tests pass, create a commit with a descriptive message
+3. If any tests fail, fix them and retry
+```
+
+<Aside type="tip">
+Commands are a great way to encode team workflows. A `/deploy-staging` command ensures everyone follows the same deployment checklist.
+</Aside>
+
+## 4. Memory
+
+Persistent notes that survive across conversations:
+
+| Scope | Path | Lifetime |
+|-------|------|----------|
+| User memory | `~/.claude/memory/` | Forever, across all projects |
+| Project memory | `.claude/memory/` | Forever, this project only |
+| Session memory | In-conversation | Current session only |
+
+**What to store:**
+- Architectural decisions discovered during work
+- Debugging insights ("the staging DB resets at 3am UTC")
+- Patterns that worked well or failed
+
+## 5. MCP Servers (Model Context Protocol)
+
+External tools that extend the agent's capabilities:
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres"],
+      "env": { "DATABASE_URL": "..." }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"]
+    }
+  }
+}
+```
+
+MCP servers give the agent access to:
+- Databases (query, schema inspection)
+- APIs (GitHub, Jira, Notion)
+- File systems (remote servers)
+- Specialized tools (linters, formatters)
+
+## How It All Fits Together
+
+```
+User types: /test-and-commit
+
+1. Load user CLAUDE.md      (personal preferences)
+2. Load project CLAUDE.md   (team conventions)
+3. Load command template     (test-and-commit.md)
+4. Load project memory       (past learnings)
+5. Connect MCP servers       (GitHub, DB access)
+6. Execute the agent loop    (plan → act → observe → repeat)
+7. Update memory             (save new learnings)
+```
+
+<Aside>
+The power of this architecture is **composability**. Each component can be added independently, and they work together automatically. You don't need all of them to start — begin with just a `CLAUDE.md` in your project root.
+</Aside>
+
+## Getting Started Checklist
+
+1. Create `CLAUDE.md` in your project root with build commands and conventions
+2. Add `~/.claude/CLAUDE.md` with your personal preferences
+3. Create your first custom command for a workflow you repeat often
+4. (Optional) Add MCP servers for tools your team uses daily
+5. (Optional) Start using memory files to persist cross-session learnings

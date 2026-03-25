@@ -1,0 +1,89 @@
+---
+title: Window Management
+description: How to stay within token limits and manage context window effectively.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Hard Limit
+
+Every model has a context window — the maximum number of tokens it can process in a single request. Once you hit the limit, older context gets truncated or the request fails.
+
+| Model | Context Window |
+|-------|---------------|
+| Claude 3.5 Sonnet | 200K tokens |
+| GPT-4o | 128K tokens |
+| Gemini 1.5 Pro | 1M tokens |
+| Claude Opus 4 | 200K tokens |
+
+<Aside type="caution">
+A large window doesn't mean you should fill it. Model attention degrades with longer contexts — the "lost in the middle" problem.
+</Aside>
+
+## The Attention Curve
+
+Models pay the most attention to:
+1. **The beginning** of the context (system prompt)
+2. **The end** of the context (latest messages)
+3. **The middle** gets the least attention
+
+This means: **put critical instructions at the start and end, not buried in the middle.**
+
+## Window Budget Planning
+
+Allocate your tokens like a budget:
+
+```
+Total Window:     200,000 tokens
+───────────────────────────────────
+System Prompt:      1,000 tokens (0.5%)
+Persistent Files:   3,000 tokens (1.5%)
+Loaded Source:     40,000 tokens (20%)
+Conversation:      80,000 tokens (40%)
+Response Reserve:  76,000 tokens (38%)
+```
+
+<Aside type="tip">
+Always reserve at least 30% of the window for the model's response. A window stuffed to the brim leaves no room for the AI to think.
+</Aside>
+
+## Practical Techniques
+
+### 1. Conversation Pruning
+
+In long sessions, summarize earlier exchanges instead of keeping full history:
+
+- First 5 messages: Keep verbatim
+- Messages 6–20: Keep only user questions and final answers
+- Messages 20+: Summarize into a paragraph
+
+### 2. Selective File Loading
+
+Instead of loading entire files:
+
+```
+# Bad: loads 2000 lines
+Read src/services/payment.ts
+
+# Good: loads 20 lines
+Read src/services/payment.ts lines 145-165
+```
+
+### 3. Use Summaries for Large Files
+
+```
+Give me a one-paragraph summary of what
+src/services/payment.ts does, without reading
+the whole file — just the exports and class names.
+```
+
+### 4. Start Fresh When Stuck
+
+If a conversation has gone on for 50+ exchanges and the AI is producing worse results, **start a new conversation** with a clean context window and a summary of where you left off.
+
+## Signs You've Overloaded Context
+
+- AI starts ignoring recent instructions
+- Responses become generic or repetitive
+- AI "forgets" things you told it 10 messages ago
+- Quality drops noticeably in long sessions
