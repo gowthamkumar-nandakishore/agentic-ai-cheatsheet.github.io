@@ -1,0 +1,263 @@
+name: Monthly AI Cheatsheet Update
+
+on:
+  schedule:
+    # Runs at 09:00 UTC on the 1st of every month
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  analyze-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Analyze current content and detect gaps
+        uses: actions/github-script@v7
+        id: analyze
+        with:
+          script: |
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+
+            // Extract all existing topics/keywords from the cheatsheet
+            const cardLabels = [...html.matchAll(/class="card-label"[^>]*>([^<]+)</g)].map(m => m[1].trim());
+            const sectionTitles = [...html.matchAll(/class="section-title"[^>]*>([^<]+)</g)].map(m => m[1].trim());
+            const badges = [...html.matchAll(/class="badge[^"]*"[^>]*>([^<]+)</g)].map(m => m[1].trim());
+            const allText = html.replace(/<[^>]+>/g, ' ').toLowerCase();
+
+            // Known AI/ML topics to check coverage
+            const topicChecklist = {
+              'Prompt Engineering': [
+                'chain-of-thought', 'few-shot', 'zero-shot', 'system prompt',
+                'role prompting', 'structured output', 'json mode',
+                'prompt chaining', 'meta-prompting', 'self-consistency',
+                'tree of thought', 'react prompting', 'reflection',
+                'prompt injection defense', 'guardrails', 'output parsing',
+              ],
+              'Context Engineering': [
+                'rag', 'retrieval augmented', 'vector search', 'embedding',
+                'context window', 'token limit', 'chunking', 'reranking',
+                'semantic search', 'hybrid search', 'knowledge graph',
+                'memory management', 'conversation history', 'sliding window',
+                'context compression', 'long context',
+              ],
+              'Agentic AI': [
+                'tool use', 'function calling', 'multi-agent', 'orchestration',
+                'planning', 'reasoning', 'self-reflection', 'human-in-the-loop',
+                'agent loop', 'task decomposition', 'autonomous',
+                'mcp', 'model context protocol', 'a2a', 'agent-to-agent',
+                'crew ai', 'langgraph', 'autogen', 'swarm',
+                'computer use', 'browser use', 'code interpreter',
+              ],
+              'Models & APIs': [
+                'claude', 'gpt-4', 'gpt-4o', 'gemini', 'llama', 'mistral',
+                'command r', 'deepseek', 'qwen', 'phi',
+                'openai', 'anthropic', 'bedrock', 'vertex ai', 'azure openai',
+                'structured outputs', 'streaming', 'batch api',
+                'vision', 'multimodal', 'audio', 'video understanding',
+              ],
+              'Evaluation & Safety': [
+                'hallucination', 'evaluation', 'benchmark', 'red teaming',
+                'alignment', 'safety', 'responsible ai', 'bias',
+                'constitutional ai', 'rlhf', 'dpo',
+                'evals', 'automated evaluation', 'human evaluation',
+              ],
+              'Infrastructure': [
+                'fine-tuning', 'lora', 'qlora', 'quantization',
+                'inference optimization', 'vllm', 'tgi',
+                'vector database', 'pinecone', 'weaviate', 'chromadb',
+                'langchain', 'llamaindex', 'semantic kernel',
+                'prompt caching', 'kv cache',
+              ],
+            };
+
+            const coverage = {};
+            const missingTopics = {};
+            let totalCovered = 0;
+            let totalTopics = 0;
+
+            for (const [category, topics] of Object.entries(topicChecklist)) {
+              const found = [];
+              const missing = [];
+              for (const topic of topics) {
+                totalTopics++;
+                if (allText.includes(topic.toLowerCase())) {
+                  found.push(topic);
+                  totalCovered++;
+                } else {
+                  missing.push(topic);
+                }
+              }
+              coverage[category] = {
+                covered: found.length,
+                total: topics.length,
+                percent: Math.round((found.length / topics.length) * 100),
+              };
+              if (missing.length > 0) {
+                missingTopics[category] = missing;
+              }
+            }
+
+            const result = {
+              existingCardCount: cardLabels.length,
+              existingSectionCount: sectionTitles.length,
+              coveragePercent: Math.round((totalCovered / totalTopics) * 100),
+              coverage,
+              missingTopics,
+              cardLabels: cardLabels.slice(0, 20),
+            };
+
+            core.setOutput('analysis', JSON.stringify(result));
+            console.log('=== Coverage Analysis ===');
+            console.log(JSON.stringify(result, null, 2));
+
+      - name: Generate new content cards
+        uses: actions/github-script@v7
+        id: generate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          script: |
+            const analysis = JSON.parse(`${{ steps.analyze.outputs.analysis }}`);
+
+            // If coverage is already very high, skip
+            if (analysis.coveragePercent >= 95) {
+              console.log('Coverage is already at ' + analysis.coveragePercent + '%. No updates needed.');
+              core.setOutput('has_updates', 'false');
+              return;
+            }
+
+            // Pick the category with worst coverage
+            let worstCategory = null;
+            let worstPercent = 100;
+            for (const [cat, info] of Object.entries(analysis.coverage)) {
+              if (info.percent < worstPercent) {
+                worstPercent = info.percent;
+                worstCategory = cat;
+              }
+            }
+
+            if (!worstCategory || !analysis.missingTopics[worstCategory]) {
+              core.setOutput('has_updates', 'false');
+              return;
+            }
+
+            const missingInWorst = analysis.missingTopics[worstCategory].slice(0, 5);
+
+            // If we have an OpenAI key, use AI to generate content
+            if (process.env.OPENAI_API_KEY) {
+              const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                  model: 'gpt-4o-mini',
+                  messages: [
+                    {
+                      role: 'system',
+                      content: `You are a technical writer creating content cards for an AI/ML cheatsheet. 
+                      The cheatsheet uses this HTML card format:
+                      <div class="card">
+                        <div class="card-label">TOPIC NAME</div>
+                        <p>Concise 1-2 sentence explanation of the concept.</p>
+                      </div>
+                      Generate ONLY the HTML card divs, no other markup. Keep explanations concise and practical.`,
+                    },
+                    {
+                      role: 'user',
+                      content: `Generate HTML cards for these missing ${worstCategory} topics: ${missingInWorst.join(', ')}. 
+                      Use the exact card format. Each card should have a card-label and a brief practical explanation.`,
+                    },
+                  ],
+                  max_tokens: 1500,
+                  temperature: 0.3,
+                }),
+              });
+
+              const data = await response.json();
+              const newCards = data.choices[0].message.content;
+
+              core.setOutput('has_updates', 'true');
+              core.setOutput('new_cards', newCards);
+              core.setOutput('category', worstCategory);
+              core.setOutput('topics', missingInWorst.join(', '));
+              core.setOutput('method', 'ai');
+              console.log('Generated AI content for:', missingInWorst);
+              return;
+            }
+
+            // Fallback: generate simple template cards without AI
+            let cards = '';
+            for (const topic of missingInWorst) {
+              const label = topic.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              cards += `\n<div class="card">\n  <div class="card-label">${label}</div>\n  <p>TODO: Add explanation for ${label}.</p>\n</div>`;
+            }
+
+            core.setOutput('has_updates', 'true');
+            core.setOutput('new_cards', cards);
+            core.setOutput('category', worstCategory);
+            core.setOutput('topics', missingInWorst.join(', '));
+            core.setOutput('method', 'template');
+            console.log('Generated template cards for:', missingInWorst);
+
+      - name: Apply content updates
+        if: steps.generate.outputs.has_updates == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let html = fs.readFileSync('index.html', 'utf8');
+            const newCards = `${{ steps.generate.outputs.new_cards }}`;
+            const category = `${{ steps.generate.outputs.category }}`;
+
+            // Insert new cards before the closing </body> tag, wrapped in a new section
+            const month = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const insertionBlock = `
+<!-- ══ AUTO-GENERATED: ${month} — ${category} ══ -->
+<div class="section-divider">
+  <h2>📡 New in ${month}: ${category}</h2>
+  <p>Auto-discovered topics added by monthly analysis workflow</p>
+</div>
+<div style="padding: 16px 32px;">
+${newCards}
+</div>
+<!-- ══ END AUTO-GENERATED ══ -->
+`;
+
+            // Insert before </body>
+            html = html.replace('</body>', insertionBlock + '\n</body>');
+            fs.writeFileSync('index.html', html);
+            console.log('Content updated successfully');
+
+      - name: Create Pull Request
+        if: steps.generate.outputs.has_updates == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'content: add ${{ steps.generate.outputs.category }} topics (${{ steps.generate.outputs.method }})'
+          title: '🔄 Monthly Update — ${{ steps.generate.outputs.category }}'
+          body: |
+            ## Monthly AI Cheatsheet Analysis
+
+            **Category with lowest coverage:** ${{ steps.generate.outputs.category }}
+            **New topics added:** ${{ steps.generate.outputs.topics }}
+            **Generation method:** ${{ steps.generate.outputs.method }}
+
+            ### What was added
+            New content cards for topics that were missing from the cheatsheet.
+
+            ${{ steps.generate.outputs.method == 'template' && '⚠️ **Template mode**: Cards have placeholder text. Please review and fill in explanations before merging.' || '✅ **AI mode**: Cards were generated with explanations. Please review for accuracy before merging.' }}
+
+            ---
+            *Auto-generated by the monthly analysis workflow. Review before merging.*
+          branch: auto-update/monthly-content
+          delete-branch: true
+          labels: automated,content-update
