@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Bug Report or Broken Link
+    url: https://github.com/gowthamkumar-nandakishore/aicheatsheet/issues/new?title=Bug%3A+
+    about: Report a bug or broken link. External contributions (PRs) are not accepted — please fork instead.
